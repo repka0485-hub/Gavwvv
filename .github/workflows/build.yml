@@ -19,19 +19,26 @@ jobs:
       - name: build dobby
         run: |
           git clone --depth 1 https://github.com/jmpews/Dobby.git /tmp/Dobby
-          # mach-o @PAGE/@PAGEOFF -> ELF :lo12: for android
-          F=/tmp/Dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm
-          sed -i -E 's/([A-Za-z0-9_]+)@PAGEOFF/:lo12:\1/g; s/@PAGE//g' "$F"
-          sed -n '50,56p' "$F"
-          ! grep -n '@PAGE' "$F"
+          # mach-o @PAGE/@PAGEOFF -> ELF :lo12:
+          python3 - <<'PY'
+          import re
+          p = "/tmp/Dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm"
+          s = open(p).read()
+          s = re.sub(r"(\w+)@PAGEOFF", r":lo12:\1", s)
+          s = s.replace("@PAGE", "")
+          open(p, "w").write(s)
+          print(s.splitlines()[50:56])
+          assert "@PAGE" not in s
+          PY
           cmake -S /tmp/Dobby -B /tmp/dobby-build \
             -DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-26 \
             -DCMAKE_BUILD_TYPE=Release \
             -DDOBBY_GENERATE_SHARED=OFF
-          cmake --build /tmp/dobby-build -j$(nproc)
+          cmake --build /tmp/dobby-build --target dobby_static -j$(nproc)
           mkdir -p dobby/arm64-v8a dobby/include
-          cp "$(find /tmp/dobby-build -name 'libdobby.a' | head -n1)" dobby/arm64-v8a/
+          find /tmp/dobby-build -name '*.a' -exec cp -t dobby/arm64-v8a {} +
+          ls dobby/arm64-v8a
           cp /tmp/Dobby/include/dobby.h dobby/include/
 
       - name: build chams
