@@ -20,9 +20,10 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/jmpews/Dobby.git /tmp/Dobby
           # mach-o @PAGE/@PAGEOFF -> ELF :lo12: for android
-          find /tmp/Dobby -name '*.asm' -path '*arm64*' -exec sed -i \
-            -e 's/\([A-Za-z0-9_]\+\)@PAGEOFF/:lo12:\1/g' \
-            -e 's/@PAGE\b//g' {} +
+          F=/tmp/Dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm
+          sed -i -E 's/([A-Za-z0-9_]+)@PAGEOFF/:lo12:\1/g; s/@PAGE//g' "$F"
+          sed -n '50,56p' "$F"
+          ! grep -n '@PAGE' "$F"
           cmake -S /tmp/Dobby -B /tmp/dobby-build \
             -DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-26 \
@@ -52,7 +53,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: check menu2
-        run: ls -la menu2/jni
+        run: find . -maxdepth 3 -not -path './.git*' | sort
 
       - name: ndk-build
         run: |
