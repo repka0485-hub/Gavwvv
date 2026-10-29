@@ -73,6 +73,11 @@ static EGLBoolean h_swap(EGLDisplay d, EGLSurface s) {
     return o_swap(d, s);
 }
 
+// DobbyHook signature differs between versions (void* vs dobby_dummy_func_t), cast to whatever it takes
+template <class R, class O>
+static int hook_impl(int (*fn)(void*, R, O), void* t, void* r, void** o) { return fn(t, (R)r, (O)o); }
+static int hook(void* t, void* r, void** o) { return hook_impl(DobbyHook, t, r, o); }
+
 static void* init(void*) {
     void *gles = nullptr, *egl = nullptr;
     while (!(gles = dlopen("libGLESv2.so", RTLD_NOW | RTLD_NOLOAD))) sleep(1);
@@ -80,8 +85,8 @@ static void* init(void*) {
     void* d = dlsym(gles, "glDrawElements");
     void* s = dlsym(egl,  "eglSwapBuffers");
     if (!d || !s) { LOG("sym fail d=%p s=%p", d, s); return nullptr; }
-    DobbyHook(d, (void*)h_draw, (void**)&o_draw);
-    DobbyHook(s, (void*)h_swap, (void**)&o_swap);
+    hook(d, (void*)h_draw, (void**)&o_draw);
+    hook(s, (void*)h_swap, (void**)&o_swap);
     LOG("hooked draw=%p swap=%p", d, s);
     return nullptr;
 }

@@ -11,7 +11,6 @@ LOCAL_SRC_FILES := \
     $(wildcard $(ROOT)/platform/*.cpp)
 
 LOCAL_C_INCLUDES := $(ROOT) $(ROOT)/imgui $(ROOT)/platform
-LOCAL_CPPFLAGS := -DIMGUI_IMPL_OPENGL_ES3
 LOCAL_LDLIBS := -lEGL -lGLESv3 -landroid -llog
 
 include $(BUILD_EXECUTABLE)
