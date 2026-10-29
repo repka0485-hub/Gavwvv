@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.18)
+project(chams)
+add_library(chams SHARED chams.cpp)
+target_include_directories(chams PRIVATE dobby/include)
+target_link_libraries(chams ${CMAKE_SOURCE_DIR}/dobby/arm64-v8a/libdobby.a GLESv3 EGL log)
